@@ -1,67 +1,81 @@
-# supplier-registration
+# 
 
-## Running in local development environment
+## Model
+www.msaez.io/#/storming/fish-distribution-erp
 
+## Before Running Services
+### Make sure there is a Kafka server running
 ```
+cd kafka
+docker-compose up
+```
+- Check the Kafka messages:
+```
+cd infra
+docker-compose exec -it kafka /bin/bash
+cd /bin
+./kafka-console-consumer --bootstrap-server localhost:9092 --topic
+```
+
+## Run the backend micro-services
+See the README.md files inside the each microservices directory:
+
+- supplier-registration
+- order
+
+
+## Run API Gateway (Spring Gateway)
+```
+cd gateway
 mvn spring-boot:run
 ```
 
-## Packaging and Running in docker environment
-
+## Test by API
+- supplier-registration
 ```
-mvn package -B -DskipTests
-docker build -t username/supplier-registration:v1 .
-docker run username/supplier-registration:v1
+ http :8088/suppliers supplierId="supplierId" supplierName="supplierName" contactNumber="contactNumber" address="address" 
 ```
-
-## Push images and running in Kubernetes
-
+- order
 ```
-docker login 
-# in case of docker hub, enter your username and password
-
-docker push username/supplier-registration:v1
 ```
 
-Edit the deployment.yaml under the /kubernetes directory:
-```
-    spec:
-      containers:
-        - name: supplier-registration
-          image: username/supplier-registration:latest   # change this image name
-          ports:
-            - containerPort: 8080
 
+## Run the frontend
+```
+cd frontend
+npm i
+npm run serve
 ```
 
-Apply the yaml to the Kubernetes:
+## Test by UI
+Open a browser to localhost:8088
+
+## Required Utilities
+
+- httpie (alternative for curl / POSTMAN) and network utils
 ```
-kubectl apply -f kubernetes/deployment.yaml
+sudo apt-get update
+sudo apt-get install net-tools
+sudo apt install iputils-ping
+pip install httpie
 ```
 
-See the pod status:
+- kubernetes utilities (kubectl)
 ```
-kubectl get pods -l app=supplier-registration
-```
-
-If you have no problem, you can connect to the service by opening a proxy between your local and the kubernetes by using this command:
-```
-# new terminal
-kubectl port-forward deploy/supplier-registration 8080:8080
-
-# another terminal
-http localhost:8080
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 ```
 
-If you have any problem on running the pod, you can find the reason by hitting this:
+- aws cli (aws)
 ```
-kubectl logs -l app=supplier-registration
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
 ```
 
-Following problems may be occurred:
-
-1. ImgPullBackOff:  Kubernetes failed to pull the image with the image name you've specified at the deployment.yaml. Please check your image name and ensure you have pushed the image properly.
-1. CrashLoopBackOff: The spring application is not running properly. If you didn't provide the kafka installation on the kubernetes, the application may crash. Please install kafka firstly:
-
-https://labs.msaez.io/#/courses/cna-full/full-course-cna/ops-utility
+- eksctl 
+```
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+```
 
